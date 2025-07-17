@@ -1,8 +1,10 @@
 "use client";
 import { Bounds, SIDE } from "@/types/resizeableBox.types";
+import { resizeBounds } from "@/utils/resizeBounds";
 import { useEffect, useRef, useState } from "react";
 
 const handles = [
+  // corners
   {
     side: SIDE.TOP | SIDE.LEFT,
     style: { top: 0, left: 0, cursor: "nwse-resize" },
@@ -20,6 +22,7 @@ const handles = [
     style: { bottom: 0, right: 0, cursor: "nwse-resize" },
   },
 
+  // sides
   {
     side: SIDE.TOP,
     style: {
@@ -74,9 +77,6 @@ export default function ResizeableBox() {
   } | null>(null);
 
   const onMouseDown = (side: number, e: React.MouseEvent) => {
-    console.log("events", e);
-    console.log("side", side);
-
     dragging.current = {
       side,
       startX: e.clientX,
@@ -89,16 +89,26 @@ export default function ResizeableBox() {
   };
 
   const onMouseMove = (e: MouseEvent) => {
-    if (!dragging?.current) return null;
+    if (!dragging?.current) return;
 
-    console.log("X", e.clientX);
+    // console.log("X", e.clientX);
     // console.log("Y", e.clientY);
 
     const dy = e.clientY - dragging?.current?.startY;
     const dx = e.clientX - dragging?.current?.startX;
 
     // console.log("DY", dy);
-    console.log("DX", dx);
+    // console.log("DX", dx);
+
+    const newValues = resizeBounds(
+      dragging?.current?.side,
+      dragging?.current?.startBound,
+      dx,
+      dy
+    );
+
+    // console.log("newValues", newValues);
+    setBounds(newValues);
   };
 
   const onMouseUp = (e: MouseEvent) => {
@@ -107,7 +117,7 @@ export default function ResizeableBox() {
     dragging.current = null;
   };
 
-  console.log("dragging", dragging?.current);
+  // console.log("dragging", dragging?.current);
 
   useEffect(() => {
     window.addEventListener("mousemove", onMouseMove);
@@ -121,7 +131,7 @@ export default function ResizeableBox() {
 
   return (
     <div
-      className="bg-red-500 absolute rounded-lg"
+      className="bg-red-500 absolute rounded-lg overflow-hidden"
       style={{
         width: bounds.width,
         height: bounds.height,
