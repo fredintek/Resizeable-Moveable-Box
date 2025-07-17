@@ -11,3 +11,10 @@ export enum SIDE {
   LEFT = 4,
   RIGHT = 8,
 }
+
+export type resizeLimits =
+  | {
+      width: number;
+      height: number;
+    }
+  | undefined;

@@ -1,10 +1,11 @@
-import { Bounds, SIDE } from "@/types/resizeableBox.types";
+import { Bounds, SIDE, resizeLimits } from "@/types/resizeableBox.types";
 
 export const resizeBounds = (
   corner: number,
   bounds: Bounds,
   dx: number,
-  dy: number
+  dy: number,
+  limits: resizeLimits
 ) => {
   const { height, width, x, y } = bounds;
 
@@ -14,21 +15,39 @@ export const resizeBounds = (
   let newHeight = height;
 
   if (corner & SIDE.LEFT) {
-    newX += dx;
-    newWidth -= dx;
+    if (limits && newWidth - dx > limits.width) {
+      newX += dx;
+      newWidth -= dx;
+    } else {
+      newX += dx;
+      newWidth -= dx;
+    }
   }
 
   if (corner & SIDE.TOP) {
-    newY += dy;
-    newHeight -= dy;
+    if (limits && newHeight - dy > limits.height) {
+      newY += dy;
+      newHeight -= dy;
+    } else {
+      newY += dy;
+      newHeight -= dy;
+    }
   }
 
   if (corner & SIDE.RIGHT) {
-    newWidth += dx;
+    if (limits && +dx > limits.width) {
+      newWidth += dx;
+    } else {
+      newWidth += dx;
+    }
   }
 
   if (corner & SIDE.BOTTOM) {
-    newHeight += dy;
+    if (limits && newHeight + dy > limits.height) {
+      newHeight += dy;
+    } else {
+      newHeight += dy;
+    }
   }
 
   return {

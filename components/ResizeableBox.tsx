@@ -1,5 +1,5 @@
 "use client";
-import { Bounds, SIDE } from "@/types/resizeableBox.types";
+import { Bounds, SIDE, resizeLimits } from "@/types/resizeableBox.types";
 import { resizeBounds } from "@/utils/resizeBounds";
 import { useEffect, useRef, useState } from "react";
 
@@ -61,60 +61,103 @@ const handles = [
   },
 ];
 
+const limits: resizeLimits = {
+  width: 150,
+  height: 100,
+};
+
 export default function ResizeableBox() {
   const [bounds, setBounds] = useState<Bounds>({
-    height: 100,
-    width: 150,
+    height: limits?.height || 100,
+    width: limits?.width || 150,
     x: 100,
     y: 100,
   });
+  const [draggingType, setDraggingType] = useState<
+    null | "moving" | "resizing"
+  >(null);
 
-  const dragging = useRef<{
-    side: number;
-    startX: number;
-    startY: number;
-    startBound: Bounds;
-  } | null>(null);
+  const dragging = useRef<
+    | {
+        type: "resizing";
+        side: number;
+        startX: number;
+        startY: number;
+        startBound: Bounds;
+      }
+    | {
+        type: "moving";
+        startX: number;
+        startY: number;
+        startBound: Bounds;
+      }
+    | null
+  >(null);
 
-  const onMouseDown = (side: number, e: React.MouseEvent) => {
+  const onHandleMouseDown = (side: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     dragging.current = {
+      type: "resizing",
       side,
       startX: e.clientX,
       startY: e.clientY,
       startBound: { ...bounds },
     };
 
+    setDraggingType("resizing");
+  };
+
+  const onBoxMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    dragging.current = {
+      type: "moving",
+      startX: e.clientX,
+      startY: e.clientY,
+      startBound: { ...bounds },
+    };
+    setDraggingType("moving");
   };
 
   const onMouseMove = (e: MouseEvent) => {
-    if (!dragging?.current) return;
+    const dragState = dragging.current;
+    if (!dragState) return;
 
-    // console.log("X", e.clientX);
-    // console.log("Y", e.clientY);
+    const dy = e.clientY - dragState?.startY;
+    const dx = e.clientX - dragState?.startX;
+    if (dragState.type === "resizing") {
+      const newValues = resizeBounds(
+        dragState?.side,
+        dragState?.startBound,
+        dx,
+        dy,
+        limits
+      );
+      setBounds(newValues);
+    }
 
-    const dy = e.clientY - dragging?.current?.startY;
-    const dx = e.clientX - dragging?.current?.startX;
+    if (dragState.type === "moving") {
+      // console.log("startingX", dragState?.startX);
+      // console.log("startingY", dragState?.startY);
+      // console.log("dx", dx);
+      // console.log("dy", dy);
 
-    // console.log("DY", dy);
-    // console.log("DX", dx);
-
-    const newValues = resizeBounds(
-      dragging?.current?.side,
-      dragging?.current?.startBound,
-      dx,
-      dy
-    );
-
-    // console.log("newValues", newValues);
-    setBounds(newValues);
+      setBounds((prevBounds) => {
+        return {
+          ...dragState.startBound,
+          x: dragState.startBound.x + dx,
+          y: dragState.startBound.y + dy,
+        };
+      });
+    }
   };
 
   const onMouseUp = (e: MouseEvent) => {
-    if (!dragging?.current) return null;
+    if (!dragging?.current) return;
 
     dragging.current = null;
+    setDraggingType(null);
   };
 
   // console.log("dragging", dragging?.current);
@@ -131,7 +174,10 @@ export default function ResizeableBox() {
 
   return (
     <div
-      className="bg-red-500 absolute rounded-lg overflow-hidden"
+      onMouseDown={(e) => onBoxMouseDown(e)}
+      className={`bg-red-500 absolute rounded-lg overflow-hidden ${
+        draggingType === "moving" ? "cursor-grabbing" : "cursor-grab"
+      }`}
       style={{
         width: bounds.width,
         height: bounds.height,
@@ -145,8 +191,8 @@ export default function ResizeableBox() {
             ...handle?.style,
           }}
           key={idx}
-          className="absolute bg-blue-500 w-[14px] h-[14px]"
-          onMouseDown={(e) => onMouseDown(handle.side, e)}
+          className="absolute w-[14px] h-[14px]"
+          onMouseDown={(e) => onHandleMouseDown(handle.side, e)}
         ></div>
       ))}
     </div>
