@@ -2,13 +2,22 @@
 import ResizeableBox from "./ResizeableBox";
 import fillColors from "./../utils/colors";
 import React, { JSX, useEffect, useRef, useState } from "react";
-import { Bounds, Point, ResizeableBoxProps } from "@/types/resizeableBox.types";
+import {
+  Bounds,
+  Point,
+  ResizeableBoxProps,
+  ResizeableBoxWithId,
+} from "@/types/resizeableBox.types";
 import SelectionBox from "./SelectionBox";
+import { getAllselectedBoxes } from "@/utils/helpers";
+import { nanoid } from "nanoid";
+import { useLayerStorage } from "@/context/LayerStorage";
 
-const limit = 100;
+const limit = 50;
 
 export default function Canvas() {
-  const [boxes, setBoxes] = useState<ResizeableBoxProps[]>([]);
+  const { getBoxes, updateSelectedBoxesIds } = useLayerStorage();
+  const [boxes, setBoxes] = useState<ResizeableBoxWithId[]>([]);
 
   const selectionNetRef = useRef<Point | null>(null);
   const [isSelecting, setIsSelecting] = useState<boolean>(false);
@@ -44,6 +53,7 @@ export default function Canvas() {
   const onCanvasMouseUp = (e: React.MouseEvent) => {
     if (isSelecting) {
       // get all boxes intersected
+      updateSelectedBoxesIds(getAllselectedBoxes(getBoxes(), selectionRect));
     }
     setIsSelecting(false);
     setSelectionBoxIsVisible(false);
@@ -68,14 +78,13 @@ export default function Canvas() {
     }
   };
 
-  console.log(selectionRect);
-
   useEffect(() => {
     setBoxes(
       Array.from({ length: 4 }).map((_, idx: number) => {
         const factorNum = Math.ceil(limit * Math.random() + limit);
         const colorIndex = Math.ceil(factorNum % fillColors.length);
         return {
+          id: nanoid(),
           width: factorNum,
           height: factorNum,
           x: factorNum,
@@ -97,7 +106,8 @@ export default function Canvas() {
         boxes?.map((boxItem, idx) => {
           return (
             <ResizeableBox
-              key={idx}
+              id={boxItem.id}
+              key={boxItem.id}
               width={boxItem.width}
               height={boxItem.height}
               x={boxItem.x}

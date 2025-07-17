@@ -10,6 +10,14 @@ export type Point = {
   y: number;
 };
 
+export type RectangleLayer = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill?: string;
+};
+
 export enum SIDE {
   TOP = 1,
   BOTTOM = 2,
@@ -18,6 +26,7 @@ export enum SIDE {
 }
 
 export type ResizeableBoxProps = {
+  id: string;
   x: number;
   y: number;
   width: number;
@@ -25,6 +34,8 @@ export type ResizeableBoxProps = {
   limits?: resizeLimits;
   fill?: string;
 };
+
+export type ResizeableBoxWithId = ResizeableBoxProps & { id: string };
 
 export type resizeLimits =
   | {

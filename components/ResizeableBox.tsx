@@ -1,4 +1,5 @@
 "use client";
+import { useLayerStorage } from "@/context/LayerStorage";
 import {
   Bounds,
   ResizeableBoxProps,
@@ -7,6 +8,7 @@ import {
 } from "@/types/resizeableBox.types";
 import { resizeBounds } from "@/utils/resizeBounds";
 import { useEffect, useRef, useState } from "react";
+import { nanoid } from "nanoid";
 
 const handles = [
   // corners
@@ -67,6 +69,7 @@ const handles = [
 ];
 
 export default function ResizeableBox({
+  id,
   x,
   y,
   width,
@@ -74,6 +77,7 @@ export default function ResizeableBox({
   limits,
   fill = "#ef4444",
 }: ResizeableBoxProps) {
+  const { updateBoxes, selectedBoxesIds } = useLayerStorage();
   const [bounds, setBounds] = useState<Bounds>({
     height,
     width,
@@ -142,6 +146,10 @@ export default function ResizeableBox({
         limits
       );
       setBounds(newValues);
+      updateBoxes({
+        id,
+        ...newValues,
+      });
     }
 
     if (dragState.type === "moving") {
@@ -157,6 +165,13 @@ export default function ResizeableBox({
           y: dragState.startBound.y + dy,
         };
       });
+      updateBoxes({
+        id,
+        x: dragState.startBound.x + dx,
+        y: dragState.startBound.y + dy,
+        width: dragState.startBound.width,
+        height: dragState.startBound.height,
+      });
     }
   };
 
@@ -170,6 +185,14 @@ export default function ResizeableBox({
   // console.log("dragging", dragging?.current);
 
   useEffect(() => {
+    updateBoxes({
+      id,
+      width,
+      height,
+      x,
+      y,
+    });
+
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
 
@@ -184,6 +207,10 @@ export default function ResizeableBox({
       onMouseDown={(e) => onBoxMouseDown(e)}
       className={`absolute rounded-lg overflow-hidden ${
         draggingType === "moving" ? "cursor-grabbing" : "cursor-grab"
+      } ${
+        selectedBoxesIds.includes(id)
+          ? "border-2 border-black border-dashed"
+          : ""
       }`}
       style={{
         width: bounds.width,
