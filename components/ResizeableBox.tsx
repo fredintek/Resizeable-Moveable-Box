@@ -1,5 +1,10 @@
 "use client";
-import { Bounds, SIDE, resizeLimits } from "@/types/resizeableBox.types";
+import {
+  Bounds,
+  ResizeableBoxProps,
+  SIDE,
+  resizeLimits,
+} from "@/types/resizeableBox.types";
 import { resizeBounds } from "@/utils/resizeBounds";
 import { useEffect, useRef, useState } from "react";
 
@@ -61,17 +66,19 @@ const handles = [
   },
 ];
 
-const limits: resizeLimits = {
-  width: 150,
-  height: 100,
-};
-
-export default function ResizeableBox() {
+export default function ResizeableBox({
+  x,
+  y,
+  width,
+  height,
+  limits,
+  fill = "#ef4444",
+}: ResizeableBoxProps) {
   const [bounds, setBounds] = useState<Bounds>({
-    height: limits?.height || 100,
-    width: limits?.width || 150,
-    x: 100,
-    y: 100,
+    height,
+    width,
+    x,
+    y,
   });
   const [draggingType, setDraggingType] = useState<
     null | "moving" | "resizing"
@@ -175,7 +182,7 @@ export default function ResizeableBox() {
   return (
     <div
       onMouseDown={(e) => onBoxMouseDown(e)}
-      className={`bg-red-500 absolute rounded-lg overflow-hidden ${
+      className={`absolute rounded-lg overflow-hidden ${
         draggingType === "moving" ? "cursor-grabbing" : "cursor-grab"
       }`}
       style={{
@@ -183,6 +190,7 @@ export default function ResizeableBox() {
         height: bounds.height,
         left: bounds.x,
         top: bounds.y,
+        backgroundColor: `${fill}`,
       }}
     >
       {handles?.map((handle: any, idx: number) => (
