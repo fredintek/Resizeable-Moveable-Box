@@ -8,9 +8,10 @@ import {
   ResizeableBoxWithId,
 } from "@/types/resizeableBox.types";
 import SelectionBox from "./SelectionBox";
-import { getAllselectedBoxes } from "@/utils/helpers";
+import { clampBoundary, getAllselectedBoxes } from "@/utils/helpers";
 import { nanoid } from "nanoid";
 import { useLayerStorage } from "@/context/LayerStorage";
+import { Camera } from "@/types/canvas.types";
 
 const limit = 50;
 
@@ -27,6 +28,13 @@ export default function Canvas() {
     y: 0,
     width: 0,
     height: 0,
+  });
+
+  const canvasRef = useRef<HTMLDivElement | null>(null);
+  const [camera, setCamera] = useState<Camera>({
+    x: 0,
+    y: 0,
+    zoom: 1,
   });
 
   const onCanvasMouseDown = (e: React.MouseEvent) => {
@@ -92,35 +100,83 @@ export default function Canvas() {
         };
       })
     );
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      console.log("wheel event", e);
+      console.log("deltaY:", e.deltaY);
+      console.log("deltaX:", e.deltaX);
+
+      // Adjust camera position based on wheel scroll
+      setCamera((prevCamera) => ({
+        x: clampBoundary(
+          prevCamera.x - (e.shiftKey ? e.deltaY : 0),
+          -1000,
+          1000
+        ),
+        y: clampBoundary(
+          prevCamera.y - (!e.shiftKey && !e.ctrlKey ? e.deltaY : 0),
+          -1000,
+          1000
+        ),
+        zoom: clampBoundary(
+          e.ctrlKey
+            ? e.deltaY > 0
+              ? prevCamera.zoom + 0.1
+              : prevCamera.zoom - 0.1
+            : 1,
+          0.2,
+          1.8
+        ),
+      }));
+    };
+
+    canvas.addEventListener("wheel", handleWheel, {
+      passive: false,
+    });
+
+    return () => {
+      canvas.removeEventListener("wheel", handleWheel);
+    };
   }, []);
 
-  return (
-    <div
-      onMouseDown={onCanvasMouseDown}
-      onMouseUp={onCanvasMouseUp}
-      onMouseMove={onCanvasMouseMove}
-      className="w-screen h-screen relative py-4 border-4 border-pink-300"
-    >
-      {boxes?.length > 0 &&
-        boxes?.map((boxItem, idx) => {
-          return (
-            <ResizeableBox
-              id={boxItem.id}
-              key={boxItem.id}
-              width={boxItem.width}
-              height={boxItem.height}
-              x={boxItem.x}
-              y={boxItem.y}
-              fill={boxItem.fill}
-              limits={boxItem.limits}
-            />
-          );
-        })}
+  console.log("CAMERA", camera);
 
-      <SelectionBox
-        bounds={{ ...selectionRect }}
-        isVisible={selectionBoxIsVisible}
-      />
+  return (
+    <div ref={canvasRef} className="w-screen h-screen">
+      <div
+        onMouseDown={onCanvasMouseDown}
+        onMouseUp={onCanvasMouseUp}
+        onMouseMove={onCanvasMouseMove}
+        style={{
+          transform: `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`,
+        }}
+        className="w-full h-full relative py-4 border-4 border-pink-300"
+      >
+        {boxes?.length > 0 &&
+          boxes?.map((boxItem, idx) => {
+            return (
+              <ResizeableBox
+                id={boxItem.id}
+                key={boxItem.id}
+                width={boxItem.width}
+                height={boxItem.height}
+                x={boxItem.x}
+                y={boxItem.y}
+                fill={boxItem.fill}
+                limits={boxItem.limits}
+              />
+            );
+          })}
+
+        <SelectionBox
+          bounds={{ ...selectionRect }}
+          isVisible={selectionBoxIsVisible}
+        />
+      </div>
     </div>
   );
 }

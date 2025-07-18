@@ -42,3 +42,6 @@ export const getAllselectedBoxes = (
 
   return targetIds;
 };
+
+export const clampBoundary = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value));

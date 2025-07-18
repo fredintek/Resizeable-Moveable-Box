@@ -1,14 +1,8 @@
 "use client";
 import { useLayerStorage } from "@/context/LayerStorage";
-import {
-  Bounds,
-  ResizeableBoxProps,
-  SIDE,
-  resizeLimits,
-} from "@/types/resizeableBox.types";
+import { Bounds, ResizeableBoxProps, SIDE } from "@/types/resizeableBox.types";
 import { resizeBounds } from "@/utils/resizeBounds";
 import { useEffect, useRef, useState } from "react";
-import { nanoid } from "nanoid";
 
 const handles = [
   // corners
