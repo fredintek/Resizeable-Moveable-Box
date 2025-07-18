@@ -5,7 +5,6 @@ import React, { JSX, useEffect, useRef, useState } from "react";
 import {
   Bounds,
   Point,
-  ResizeableBoxProps,
   ResizeableBoxWithId,
 } from "@/types/resizeableBox.types";
 import SelectionBox from "./SelectionBox";
